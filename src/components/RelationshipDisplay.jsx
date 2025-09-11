@@ -26,6 +26,21 @@ const RelationshipItem = ({ relationship, type, isOutgoing }) => {
         e.target.style.borderColor = "#e2e8f0";
       }}
     >
+      {label && (
+        <div
+          style={{
+            padding: "2px 8px",
+            background: isOutgoing ? "#dbeafe" : "#dcfce7",
+            color: isOutgoing ? "#1e40af" : "#166534",
+            borderRadius: "12px",
+            fontSize: "10px",
+            fontWeight: "500",
+          }}
+        >
+          {label}
+        </div>
+      )}
+
       {isOutgoing ? (
         <>
           <div
@@ -86,22 +101,6 @@ const RelationshipItem = ({ relationship, type, isOutgoing }) => {
             {target}
           </div>
         </>
-      )}
-
-      {label && (
-        <div
-          style={{
-            marginLeft: "auto",
-            padding: "2px 8px",
-            background: isOutgoing ? "#dbeafe" : "#dcfce7",
-            color: isOutgoing ? "#1e40af" : "#166534",
-            borderRadius: "12px",
-            fontSize: "10px",
-            fontWeight: "500",
-          }}
-        >
-          {label}
-        </div>
       )}
     </div>
   );
@@ -222,7 +221,7 @@ const RelationshipDisplay = ({ selected, graph }) => {
       </div>
 
       <RelationshipSection
-        title="出ていく関係"
+        title="想い"
         relationships={outgoingRelationships}
         type="outgoing"
         isOutgoing={true}
@@ -230,7 +229,7 @@ const RelationshipDisplay = ({ selected, graph }) => {
       />
 
       <RelationshipSection
-        title="入ってくる関係"
+        title="思われ"
         relationships={incomingRelationships}
         type="incoming"
         isOutgoing={false}

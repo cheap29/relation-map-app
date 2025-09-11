@@ -220,6 +220,7 @@ const NodeList = ({ nodes, onNodesChange }) => {
             borderRadius: "6px",
             fontSize: "12px",
             cursor: "pointer",
+            display: "none",
           }}
         >
           <FaPlus />
