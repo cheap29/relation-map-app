@@ -1,18 +1,36 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
-const SAMPLE_TITLE = "桃太郎";
-const SAMPLE_NODES = [
-  { id: "桃太郎", name: "桃太郎", weight: 10, desc: "鬼退治へ向かう主人公" },
-  { id: "犬", name: "犬", weight: 6, desc: "きびだんごで仲間に" },
-  { id: "猿", name: "猿", weight: 6, desc: "きびだんごで仲間に" },
-  { id: "雉", name: "雉", weight: 6, desc: "きびだんごで仲間に" },
-  { id: "鬼", name: "鬼", weight: 9, desc: "鬼ヶ島のならず者" },
-];
-const SAMPLE_EDGES = `桃太郎 - 犬 | 仲間
-桃太郎 - 猿 | 仲間
-桃太郎 - 雉 | 仲間
-桃太郎 - 鬼 | 退治`;
+// デフォルトのサンプルデータ
+const DEFAULT_DATA = {
+  title: "桃太郎",
+  nodes: [
+    { id: "桃太郎", name: "桃太郎", weight: 10, desc: "鬼退治へ向かう主人公" },
+    { id: "犬", name: "犬", weight: 6, desc: "きびだんごで仲間に" },
+    { id: "猿", name: "猿", weight: 6, desc: "きびだんごで仲間に" },
+    { id: "雉", name: "雉", weight: 6, desc: "きびだんごで仲間に" },
+    { id: "鬼", name: "鬼", weight: 9, desc: "鬼ヶ島のならず者" },
+  ],
+  edges: [
+    { source: "桃太郎", target: "犬", label: "仲間" },
+    { source: "桃太郎", target: "猿", label: "仲間" },
+    { source: "桃太郎", target: "雉", label: "仲間" },
+    { source: "桃太郎", target: "鬼", label: "退治" },
+  ],
+};
 
+// JSONデータを読み込む関数
+const loadJSONData = async (url) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error("JSON読み込みエラー:", error);
+    return DEFAULT_DATA;
+  }
+};
+
+// テキスト形式のノードを解析（後方互換性のため残す）
 function parseNodes(text) {
   const result = [];
   const lines = String(text || "").split(/\n+/);
@@ -30,6 +48,7 @@ function parseNodes(text) {
   return result;
 }
 
+// テキスト形式のエッジを解析（後方互換性のため残す）
 function parseEdges(text) {
   const edges = [];
   const lines = String(text || "").split(/\n+/);
@@ -118,14 +137,31 @@ function makeOption(nodes, edges, highlight) {
 }
 
 export const useRelationMap = () => {
-  const [title, setTitle] = useState(SAMPLE_TITLE);
-  const [nodes, setNodes] = useState(SAMPLE_NODES);
-  const [edgeText, setEdgeText] = useState(SAMPLE_EDGES);
+  const [title, setTitle] = useState(DEFAULT_DATA.title);
+  const [nodes, setNodes] = useState(DEFAULT_DATA.nodes);
+  const [edges, setEdges] = useState(DEFAULT_DATA.edges);
   const [selected, setSelected] = useState(null);
   const [testLog, setTestLog] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const rawEdges = useMemo(() => parseEdges(edgeText), [edgeText]);
-  const edges = useMemo(() => filterEdges(nodes, rawEdges), [nodes, rawEdges]);
+  // 初期化時にJSONファイルを読み込む
+  useEffect(() => {
+    const initializeData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await loadJSONData("/sample-data.json");
+        setTitle(data.title);
+        setNodes(data.nodes);
+        setEdges(data.edges);
+      } catch (error) {
+        console.error("初期データ読み込みエラー:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initializeData();
+  }, []);
+
   const graph = useMemo(() => buildAdjacency(nodes, edges), [nodes, edges]);
   const option = useMemo(
     () => makeOption(nodes, edges, selected?.name),
@@ -141,11 +177,46 @@ export const useRelationMap = () => {
     },
   };
 
-  const loadSample = () => {
-    setTitle(SAMPLE_TITLE);
-    setNodes(SAMPLE_NODES);
-    setEdgeText(SAMPLE_EDGES);
-    setSelected(null);
+  const loadSample = async () => {
+    setIsLoading(true);
+    try {
+      const data = await loadJSONData("/sample-data.json");
+      setTitle(data.title);
+      setNodes(data.nodes);
+      setEdges(data.edges);
+      setSelected(null);
+    } catch (error) {
+      console.error("サンプルデータ読み込みエラー:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadJSONFile = async (file) => {
+    setIsLoading(true);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      // データの検証
+      if (
+        !data.title ||
+        !Array.isArray(data.nodes) ||
+        !Array.isArray(data.edges)
+      ) {
+        throw new Error("無効なJSON形式です");
+      }
+
+      setTitle(data.title);
+      setNodes(data.nodes);
+      setEdges(data.edges);
+      setSelected(null);
+    } catch (error) {
+      console.error("JSONファイル読み込みエラー:", error);
+      alert("JSONファイルの読み込みに失敗しました: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const exportJSON = () => {
@@ -193,19 +264,20 @@ export const useRelationMap = () => {
     setTitle,
     nodes,
     setNodes,
-    edgeText,
-    setEdgeText,
+    edges,
+    setEdges,
     selected,
     testLog,
+    isLoading,
 
     // Computed values
-    edges,
     graph,
     option,
 
     // Functions
     onEvents,
     loadSample,
+    loadJSONFile,
     exportJSON,
     runTests,
   };

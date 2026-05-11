@@ -16,15 +16,16 @@ export default function App() {
     setTitle,
     nodes,
     setNodes,
-    edgeText,
-    setEdgeText,
+    edges,
+    setEdges,
     selected,
     testLog,
-    edges,
+    isLoading,
     graph,
     option,
     onEvents,
     loadSample,
+    loadJSONFile,
     exportJSON,
     runTests,
   } = useRelationMap();
@@ -109,12 +110,22 @@ export default function App() {
               />
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={loadSample}
+              <input
+                type="file"
+                accept=".json"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) loadJSONFile(file);
+                }}
+                style={{ display: "none" }}
+                id="json-file-input"
+              />
+              <label
+                htmlFor="json-file-input"
                 style={{
                   padding: "10px 16px",
                   background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
                   color: "white",
                   border: "none",
                   borderRadius: "12px",
@@ -133,7 +144,39 @@ export default function App() {
                   e.target.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
                 }}
               >
-                サンプル読込
+                JSON読み込み
+              </label>
+              <button
+                onClick={loadSample}
+                disabled={isLoading}
+                style={{
+                  padding: "10px 16px",
+                  background: isLoading
+                    ? "#9ca3af"
+                    : "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isLoading) {
+                    e.target.style.transform = "translateY(-1px)";
+                    e.target.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.15)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoading) {
+                    e.target.style.transform = "translateY(0)";
+                    e.target.style.boxShadow = "0 2px 4px rgba(0, 0, 0, 0.1)";
+                  }
+                }}
+              >
+                {isLoading ? "読み込み中..." : "サンプル読み込み"}
               </button>
               <button
                 onClick={exportJSON}
